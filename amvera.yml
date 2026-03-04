@@ -1,0 +1,13 @@
+meta:
+  environment: jvm
+  toolchain:
+    name: gradle
+    version: 8.8
+
+build:
+  dockerfile: Dockerfile
+
+run:
+  containerPort: 8080
+  persistentVolumeClaimName: apk-data
+  persistentVolumePath: /app/data
