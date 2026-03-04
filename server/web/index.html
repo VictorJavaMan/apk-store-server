@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>APK Store</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #3DDC84;
+            --primary-dark: #00a956;
+            --primary-light: #B8F5CD;
+            --secondary: #4285F4;
+            --error: #B3261E;
+            --background: #FAFAFA;
+            --surface: #FFFFFF;
+            --on-surface: #1C1B1F;
+            --on-surface-variant: #49454F;
+            --outline: #79747E;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--background);
+            color: var(--on-surface);
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 16px 24px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: white;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .search-box {
+            flex: 1;
+            max-width: 500px;
+            position: relative;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 16px 12px 48px;
+            border: none;
+            border-radius: 24px;
+            font-size: 16px;
+            background: rgba(255,255,255,0.9);
+            outline: none;
+            transition: box-shadow 0.2s;
+        }
+
+        .search-box input:focus {
+            box-shadow: 0 0 0 3px rgba(255,255,255,0.3);
+        }
+
+        .search-box .material-icons {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--on-surface-variant);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .icon-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .icon-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        /* Main Content */
+        .main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .stat-card h3 {
+            font-size: 14px;
+            color: var(--on-surface-variant);
+            margin-bottom: 8px;
+        }
+
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        /* APK Grid */
+        .section-title {
+            font-size: 20px;
+            font-weight: 500;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .apk-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 16px;
+        }
+
+        .apk-card {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .apk-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .apk-header {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .apk-icon {
+            width: 64px;
+            height: 64px;
+            background: var(--primary-light);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-dark);
+            font-weight: bold;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .apk-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .apk-name {
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .apk-package {
+            font-size: 13px;
+            color: var(--on-surface-variant);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .apk-meta {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 6px 12px;
+            background: var(--background);
+            border-radius: 16px;
+            font-size: 12px;
+            color: var(--on-surface-variant);
+        }
+
+        .chip .material-icons {
+            font-size: 16px;
+        }
+
+        .apk-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 24px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--outline);
+            color: var(--on-surface);
+        }
+
+        .btn-outline:hover {
+            background: var(--background);
+        }
+
+        .btn-danger {
+            background: transparent;
+            border: 1px solid var(--error);
+            color: var(--error);
+        }
+
+        .btn-danger:hover {
+            background: rgba(179, 38, 30, 0.1);
+        }
+
+        /* FAB */
+        .fab {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 56px;
+            height: 56px;
+            border-radius: 16px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(61, 220, 132, 0.4);
+            transition: all 0.2s;
+        }
+
+        .fab:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 16px rgba(61, 220, 132, 0.5);
+        }
+
+        .fab .material-icons {
+            font-size: 28px;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            color: var(--on-surface-variant);
+        }
+
+        .empty-state .material-icons {
+            font-size: 80px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            font-size: 20px;
+            margin-bottom: 8px;
+        }
+
+        /* Loading */
+        .loading {
+            display: flex;
+            justify-content: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--background);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            background: var(--surface);
+            border-radius: 24px;
+            padding: 24px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: scale(0.9);
+            transition: transform 0.3s;
+        }
+
+        .modal-overlay.active .modal {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 {
+            font-size: 20px;
+            font-weight: 500;
+        }
+
+        .modal-close {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-close:hover {
+            background: var(--background);
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            color: var(--on-surface-variant);
+            margin-bottom: 8px;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--outline);
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            border-color: var(--primary);
+        }
+
+        .file-input {
+            border: 2px dashed var(--outline);
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .file-input:hover {
+            border-color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        .file-input.dragover {
+            border-color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        .file-input .material-icons {
+            font-size: 48px;
+            color: var(--on-surface-variant);
+            margin-bottom: 8px;
+        }
+
+        .file-input p {
+            color: var(--on-surface-variant);
+        }
+
+        .file-input .filename {
+            margin-top: 12px;
+            font-weight: 500;
+            color: var(--primary);
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--on-surface);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 2000;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-wrap: wrap;
+            }
+
+            .search-box {
+                order: 3;
+                max-width: none;
+                width: 100%;
+            }
+
+            .apk-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">APK</div>
+                <span>APK Store</span>
+            </div>
+            <div class="search-box">
+                <span class="material-icons">search</span>
+                <input type="text" id="searchInput" placeholder="Search apps...">
+            </div>
+            <div class="header-actions">
+                <button class="icon-btn" onclick="loadApks()" title="Refresh">
+                    <span class="material-icons">refresh</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="stats">
+            <div class="stat-card">
+                <h3>Total Apps</h3>
+                <div class="value" id="totalApps">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Total Downloads</h3>
+                <div class="value" id="totalDownloads">0</div>
+            </div>
+        </div>
+
+        <h2 class="section-title">
+            <span class="material-icons">apps</span>
+            Available Apps
+        </h2>
+
+        <div id="apkList" class="apk-grid"></div>
+    </main>
+
+    <button class="fab" onclick="showUploadModal()" title="Upload APK">
+        <span class="material-icons">add</span>
+    </button>
+
+    <!-- Upload Modal -->
+    <div class="modal-overlay" id="uploadModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Upload APK</h2>
+                <button class="modal-close" onclick="hideUploadModal()">
+                    <span class="material-icons">close</span>
+                </button>
+            </div>
+            <form id="uploadForm">
+                <div class="form-group">
+                    <label>APK File</label>
+                    <div class="file-input" id="fileInput">
+                        <span class="material-icons">cloud_upload</span>
+                        <p>Click or drag file to upload</p>
+                        <div class="filename" id="fileName"></div>
+                        <input type="file" id="apkFile" accept=".apk" hidden>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Package Name</label>
+                    <input type="text" id="packageName" placeholder="com.example.app" required>
+                </div>
+                <div class="form-group">
+                    <label>Version Name</label>
+                    <input type="text" id="versionName" placeholder="1.0.0" required>
+                </div>
+                <div class="form-group">
+                    <label>Version Code</label>
+                    <input type="number" id="versionCode" placeholder="1" required>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="description" rows="3" placeholder="App description..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                    <span class="material-icons">upload</span>
+                    Upload
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Detail Modal -->
+    <div class="modal-overlay" id="detailModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="detailName">App Name</h2>
+                <button class="modal-close" onclick="hideDetailModal()">
+                    <span class="material-icons">close</span>
+                </button>
+            </div>
+            <div id="detailContent"></div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // Auto-detect API URL based on current host
+        const API_BASE = window.location.origin + '/api/apks';
+        let apks = [];
+
+        // Load APKs on page load
+        document.addEventListener('DOMContentLoaded', loadApks);
+
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            const filtered = apks.filter(apk =>
+                apk.fileName.toLowerCase().includes(query) ||
+                apk.packageName.toLowerCase().includes(query)
+            );
+            renderApks(filtered);
+        });
+
+        async function loadApks() {
+            const container = document.getElementById('apkList');
+            container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+            try {
+                const response = await fetch(API_BASE);
+                const data = await response.json();
+                apks = data.apps;
+                renderApks(apks);
+                updateStats();
+            } catch (error) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <span class="material-icons">error</span>
+                        <h3>Failed to load apps</h3>
+                        <p>Make sure the server is running</p>
+                        <button class="btn btn-primary" onclick="loadApks()" style="margin-top: 16px;">
+                            Retry
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        function renderApks(apps) {
+            const container = document.getElementById('apkList');
+
+            if (apps.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <span class="material-icons">folder_open</span>
+                        <h3>No APKs found</h3>
+                        <p>Upload your first APK to get started</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = apps.map(apk => `
+                <div class="apk-card" onclick="showDetail(${apk.id})">
+                    <div class="apk-header">
+                        <div class="apk-icon">APK</div>
+                        <div class="apk-info">
+                            <div class="apk-name">${escapeHtml(apk.fileName)}</div>
+                            <div class="apk-package">${escapeHtml(apk.packageName)}</div>
+                        </div>
+                    </div>
+                    <div class="apk-meta">
+                        <span class="chip">
+                            <span class="material-icons">label</span>
+                            v${escapeHtml(apk.versionName)}
+                        </span>
+                        <span class="chip">
+                            <span class="material-icons">storage</span>
+                            ${formatSize(apk.fileSize)}
+                        </span>
+                        <span class="chip">
+                            <span class="material-icons">download</span>
+                            ${apk.downloadCount}
+                        </span>
+                    </div>
+                    <div class="apk-actions" onclick="event.stopPropagation()">
+                        <button class="btn btn-primary" onclick="downloadApk(${apk.id})">
+                            <span class="material-icons">download</span>
+                            Download
+                        </button>
+                        <button class="btn btn-danger" onclick="deleteApk(${apk.id}, '${escapeHtml(apk.fileName)}')">
+                            <span class="material-icons">delete</span>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateStats() {
+            document.getElementById('totalApps').textContent = apks.length;
+            const totalDownloads = apks.reduce((sum, apk) => sum + apk.downloadCount, 0);
+            document.getElementById('totalDownloads').textContent = totalDownloads;
+        }
+
+        function showDetail(id) {
+            const apk = apks.find(a => a.id === id);
+            if (!apk) return;
+
+            document.getElementById('detailName').textContent = apk.fileName;
+            document.getElementById('detailContent').innerHTML = `
+                <div style="margin-bottom: 20px;">
+                    <div class="apk-header">
+                        <div class="apk-icon" style="width: 80px; height: 80px; font-size: 24px;">APK</div>
+                        <div class="apk-info">
+                            <div class="apk-package">${escapeHtml(apk.packageName)}</div>
+                        </div>
+                    </div>
+                </div>
+                <div style="display: grid; gap: 12px; margin-bottom: 20px;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span class="material-icons" style="color: var(--on-surface-variant);">info</span>
+                        <span style="color: var(--on-surface-variant); width: 100px;">Version</span>
+                        <span>${apk.versionName} (${apk.versionCode})</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span class="material-icons" style="color: var(--on-surface-variant);">storage</span>
+                        <span style="color: var(--on-surface-variant); width: 100px;">Size</span>
+                        <span>${formatSize(apk.fileSize)}</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span class="material-icons" style="color: var(--on-surface-variant);">download</span>
+                        <span style="color: var(--on-surface-variant); width: 100px;">Downloads</span>
+                        <span>${apk.downloadCount}</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span class="material-icons" style="color: var(--on-surface-variant);">schedule</span>
+                        <span style="color: var(--on-surface-variant); width: 100px;">Uploaded</span>
+                        <span>${formatDate(apk.uploadedAt)}</span>
+                    </div>
+                </div>
+                ${apk.description ? `<p style="color: var(--on-surface-variant); margin-bottom: 20px;">${escapeHtml(apk.description)}</p>` : ''}
+                <div style="display: flex; gap: 12px;">
+                    <button class="btn btn-danger" onclick="deleteApk(${apk.id}, '${escapeHtml(apk.fileName)}'); hideDetailModal();">
+                        <span class="material-icons">delete</span>
+                        Delete
+                    </button>
+                    <button class="btn btn-primary" onclick="downloadApk(${apk.id})">
+                        <span class="material-icons">download</span>
+                        Download
+                    </button>
+                </div>
+            `;
+            document.getElementById('detailModal').classList.add('active');
+        }
+
+        function hideDetailModal() {
+            document.getElementById('detailModal').classList.remove('active');
+        }
+
+        function downloadApk(id) {
+            window.open(`${API_BASE}/${id}/download`, '_blank');
+            showToast('Download started');
+            setTimeout(loadApks, 1000);
+        }
+
+        async function deleteApk(id, name) {
+            if (!confirm(`Delete "${name}"?`)) return;
+
+            try {
+                await fetch(`${API_BASE}/${id}`, { method: 'DELETE' });
+                showToast('APK deleted');
+                loadApks();
+            } catch (error) {
+                showToast('Failed to delete');
+            }
+        }
+
+        // Upload functionality
+        const fileInput = document.getElementById('fileInput');
+        const apkFileInput = document.getElementById('apkFile');
+
+        fileInput.addEventListener('click', () => apkFileInput.click());
+        fileInput.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            fileInput.classList.add('dragover');
+        });
+        fileInput.addEventListener('dragleave', () => {
+            fileInput.classList.remove('dragover');
+        });
+        fileInput.addEventListener('drop', (e) => {
+            e.preventDefault();
+            fileInput.classList.remove('dragover');
+            if (e.dataTransfer.files.length) {
+                apkFileInput.files = e.dataTransfer.files;
+                updateFileName();
+            }
+        });
+
+        apkFileInput.addEventListener('change', updateFileName);
+
+        function updateFileName() {
+            const file = apkFileInput.files[0];
+            document.getElementById('fileName').textContent = file ? file.name : '';
+        }
+
+        function showUploadModal() {
+            document.getElementById('uploadModal').classList.add('active');
+        }
+
+        function hideUploadModal() {
+            document.getElementById('uploadModal').classList.remove('active');
+            document.getElementById('uploadForm').reset();
+            document.getElementById('fileName').textContent = '';
+        }
+
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const file = apkFileInput.files[0];
+            if (!file) {
+                showToast('Please select a file');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('packageName', document.getElementById('packageName').value);
+            formData.append('versionName', document.getElementById('versionName').value);
+            formData.append('versionCode', document.getElementById('versionCode').value);
+            formData.append('description', document.getElementById('description').value);
+
+            try {
+                const response = await fetch(`${API_BASE}/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    showToast('Upload successful!');
+                    hideUploadModal();
+                    loadApks();
+                } else {
+                    showToast('Upload failed: ' + result.message);
+                }
+            } catch (error) {
+                showToast('Upload failed');
+            }
+        });
+
+        // Close modal on overlay click
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    overlay.classList.remove('active');
+                }
+            });
+        });
+
+        // Utility functions
+        function formatSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / 1024 / 1024).toFixed(2) + ' MB';
+        }
+
+        function formatDate(dateStr) {
+            return dateStr.split('T')[0];
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+    </script>
+</body>
+</html>

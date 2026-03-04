@@ -1,0 +1,11 @@
+.gradle
+.idea
+.kotlin
+build
+*/build
+composeApp
+iosApp
+*.md
+.git
+.gitignore
+local.properties

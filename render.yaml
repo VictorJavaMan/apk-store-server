@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: apk-store
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: PORT
+        value: 10000
+    disk:
+      name: apk-store-data
+      mountPath: /app/data
+      sizeGB: 1
