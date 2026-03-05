@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>APK For Testers</title>
+    <title>APK Store</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
         :root {
-            --primary: #2196F3;
-            --primary-dark: #1976D2;
-            --primary-light: #BBDEFB;
-            --secondary: #03A9F4;
+            --primary: #3DDC84;
+            --primary-dark: #00a956;
+            --primary-light: #B8F5CD;
+            --secondary: #4285F4;
             --error: #B3261E;
             --background: #FAFAFA;
             --surface: #FFFFFF;
@@ -223,6 +223,13 @@
             text-overflow: ellipsis;
         }
 
+        .apk-package {
+            font-size: 13px;
+            color: var(--on-surface-variant);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
 
         .apk-meta {
             display: flex;
@@ -310,13 +317,13 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
+            box-shadow: 0 4px 12px rgba(61, 220, 132, 0.4);
             transition: all 0.2s;
         }
 
         .fab:hover {
             transform: scale(1.05);
-            box-shadow: 0 6px 16px rgba(33, 150, 243, 0.5);
+            box-shadow: 0 6px 16px rgba(61, 220, 132, 0.5);
         }
 
         .fab .material-icons {
@@ -534,16 +541,13 @@
         <div class="header-content">
             <div class="logo">
                 <div class="logo-icon">APK</div>
-                <span>APK For Testers</span>
+                <span>APK Store</span>
             </div>
             <div class="search-box">
                 <span class="material-icons">search</span>
                 <input type="text" id="searchInput" placeholder="Search apps...">
             </div>
             <div class="header-actions">
-                <button class="icon-btn" onclick="showServerModal()" title="Server Settings">
-                    <span class="material-icons">settings</span>
-                </button>
                 <button class="icon-btn" onclick="loadApks()" title="Refresh">
                     <span class="material-icons">refresh</span>
                 </button>
@@ -595,6 +599,18 @@
                     </div>
                 </div>
                 <div class="form-group">
+                    <label>Package Name</label>
+                    <input type="text" id="packageName" placeholder="com.example.app" required>
+                </div>
+                <div class="form-group">
+                    <label>Version Name</label>
+                    <input type="text" id="versionName" placeholder="1.0.0" required>
+                </div>
+                <div class="form-group">
+                    <label>Version Code</label>
+                    <input type="number" id="versionCode" placeholder="1" required>
+                </div>
+                <div class="form-group">
                     <label>Description</label>
                     <textarea id="description" rows="3" placeholder="App description..."></textarea>
                 </div>
@@ -619,95 +635,32 @@
         </div>
     </div>
 
-    <!-- Server Settings Modal -->
-    <div class="modal-overlay" id="serverModal">
-        <div class="modal">
-            <div class="modal-header">
-                <h2>Server Settings</h2>
-                <button class="modal-close" onclick="hideServerModal()">
-                    <span class="material-icons">close</span>
-                </button>
-            </div>
-            <div class="form-group">
-                <label>Server URL</label>
-                <input type="text" id="serverUrl" placeholder="http://192.168.1.100:8080">
-                <p style="font-size: 12px; color: var(--on-surface-variant); margin-top: 8px;">
-                    Enter the URL shown in your APK For Testers app (Server tab)
-                </p>
-            </div>
-            <button class="btn btn-primary" onclick="saveServerUrl()" style="width: 100%; margin-top: 16px;">
-                <span class="material-icons">save</span>
-                Save & Connect
-            </button>
-        </div>
-    </div>
-
     <div class="toast" id="toast"></div>
 
     <script>
-        // Server URL from localStorage or default
-        let API_SERVER = localStorage.getItem('apkstore_server') || '';
+        // Auto-detect API URL based on current host
+        const API_BASE = window.location.origin + '/api/apks';
         let apks = [];
 
-        function getApiBase() {
-            return API_SERVER + '/api/apks';
-        }
-
         // Load APKs on page load
-        document.addEventListener('DOMContentLoaded', () => {
-            if (!API_SERVER) {
-                showServerModal();
-            } else {
-                loadApks();
-            }
-        });
-
-        function showServerModal() {
-            document.getElementById('serverUrl').value = API_SERVER;
-            document.getElementById('serverModal').classList.add('active');
-        }
-
-        function hideServerModal() {
-            document.getElementById('serverModal').classList.remove('active');
-        }
-
-        function saveServerUrl() {
-            let url = document.getElementById('serverUrl').value.trim();
-            // Remove trailing slash
-            if (url.endsWith('/')) {
-                url = url.slice(0, -1);
-            }
-            if (!url) {
-                showToast('Please enter a server URL');
-                return;
-            }
-            API_SERVER = url;
-            localStorage.setItem('apkstore_server', url);
-            hideServerModal();
-            showToast('Server URL saved');
-            loadApks();
-        }
+        document.addEventListener('DOMContentLoaded', loadApks);
 
         // Search functionality
         document.getElementById('searchInput').addEventListener('input', (e) => {
             const query = e.target.value.toLowerCase();
             const filtered = apks.filter(apk =>
-                apk.fileName.toLowerCase().includes(query)
+                apk.fileName.toLowerCase().includes(query) ||
+                apk.packageName.toLowerCase().includes(query)
             );
             renderApks(filtered);
         });
 
         async function loadApks() {
-            if (!API_SERVER) {
-                showServerModal();
-                return;
-            }
-
             const container = document.getElementById('apkList');
             container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
 
             try {
-                const response = await fetch(getApiBase());
+                const response = await fetch(API_BASE);
                 const data = await response.json();
                 apks = data.apps;
                 renderApks(apks);
@@ -717,13 +670,8 @@
                     <div class="empty-state">
                         <span class="material-icons">error</span>
                         <h3>Failed to load apps</h3>
-                        <p>Server: ${API_SERVER}</p>
-                        <p style="margin-top: 8px; font-size: 12px;">Make sure the server is running</p>
-                        <button class="btn btn-outline" onclick="showServerModal()" style="margin-top: 16px;">
-                            <span class="material-icons">settings</span>
-                            Change Server
-                        </button>
-                        <button class="btn btn-primary" onclick="loadApks()" style="margin-top: 8px;">
+                        <p>Make sure the server is running</p>
+                        <button class="btn btn-primary" onclick="loadApks()" style="margin-top: 16px;">
                             Retry
                         </button>
                     </div>
@@ -751,9 +699,14 @@
                         <div class="apk-icon">APK</div>
                         <div class="apk-info">
                             <div class="apk-name">${escapeHtml(apk.fileName)}</div>
+                            <div class="apk-package">${escapeHtml(apk.packageName)}</div>
                         </div>
                     </div>
                     <div class="apk-meta">
+                        <span class="chip">
+                            <span class="material-icons">label</span>
+                            v${escapeHtml(apk.versionName)}
+                        </span>
                         <span class="chip">
                             <span class="material-icons">storage</span>
                             ${formatSize(apk.fileSize)}
@@ -792,11 +745,16 @@
                     <div class="apk-header">
                         <div class="apk-icon" style="width: 80px; height: 80px; font-size: 24px;">APK</div>
                         <div class="apk-info">
-                            <div class="apk-name">${escapeHtml(apk.fileName)}</div>
+                            <div class="apk-package">${escapeHtml(apk.packageName)}</div>
                         </div>
                     </div>
                 </div>
                 <div style="display: grid; gap: 12px; margin-bottom: 20px;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span class="material-icons" style="color: var(--on-surface-variant);">info</span>
+                        <span style="color: var(--on-surface-variant); width: 100px;">Version</span>
+                        <span>${apk.versionName} (${apk.versionCode})</span>
+                    </div>
                     <div style="display: flex; align-items: center; gap: 12px;">
                         <span class="material-icons" style="color: var(--on-surface-variant);">storage</span>
                         <span style="color: var(--on-surface-variant); width: 100px;">Size</span>
@@ -833,7 +791,7 @@
         }
 
         function downloadApk(id) {
-            window.open(`${getApiBase()}/${id}/download`, '_blank');
+            window.open(`${API_BASE}/${id}/download`, '_blank');
             showToast('Download started');
             setTimeout(loadApks, 1000);
         }
@@ -842,7 +800,7 @@
             if (!confirm(`Delete "${name}"?`)) return;
 
             try {
-                await fetch(`${getApiBase()}/${id}`, { method: 'DELETE' });
+                await fetch(`${API_BASE}/${id}`, { method: 'DELETE' });
                 showToast('APK deleted');
                 loadApks();
             } catch (error) {
@@ -899,10 +857,13 @@
 
             const formData = new FormData();
             formData.append('file', file);
+            formData.append('packageName', document.getElementById('packageName').value);
+            formData.append('versionName', document.getElementById('versionName').value);
+            formData.append('versionCode', document.getElementById('versionCode').value);
             formData.append('description', document.getElementById('description').value);
 
             try {
-                const response = await fetch(`${getApiBase()}/upload`, {
+                const response = await fetch(`${API_BASE}/upload`, {
                     method: 'POST',
                     body: formData
                 });

@@ -34,9 +34,6 @@ fun UploadApkDialog(
 
     var selectedUri by remember { mutableStateOf<Uri?>(null) }
     var fileName by remember { mutableStateOf("") }
-    var packageName by remember { mutableStateOf("") }
-    var versionName by remember { mutableStateOf("1.0") }
-    var versionCode by remember { mutableStateOf("1") }
     var description by remember { mutableStateOf("") }
     var isUploading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -57,10 +54,6 @@ fun UploadApkDialog(
             }
             if (fileName.isEmpty()) {
                 fileName = it.lastPathSegment ?: "app.apk"
-            }
-            // Auto-fill package name from filename
-            if (packageName.isEmpty() && fileName.endsWith(".apk")) {
-                packageName = fileName.removeSuffix(".apk")
             }
         }
     }
@@ -107,38 +100,6 @@ fun UploadApkDialog(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 OutlinedTextField(
-                    value = packageName,
-                    onValueChange = { packageName = it },
-                    label = { Text("Package Name") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    OutlinedTextField(
-                        value = versionName,
-                        onValueChange = { versionName = it },
-                        label = { Text("Version") },
-                        modifier = Modifier.weight(1f),
-                        singleLine = true
-                    )
-                    OutlinedTextField(
-                        value = versionCode,
-                        onValueChange = { if (it.all { c -> c.isDigit() }) versionCode = it },
-                        label = { Text("Code") },
-                        modifier = Modifier.weight(1f),
-                        singleLine = true
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
                     label = { Text("Description (optional)") },
@@ -164,10 +125,6 @@ fun UploadApkDialog(
                             error = "Please select a file"
                             return@Button
                         }
-                        if (packageName.isBlank()) {
-                            error = "Package name is required"
-                            return@Button
-                        }
 
                         isUploading = true
                         error = null
@@ -178,9 +135,6 @@ fun UploadApkDialog(
                                     context = context,
                                     serverUrl = serverUrl,
                                     uri = selectedUri!!,
-                                    packageName = packageName,
-                                    versionName = versionName,
-                                    versionCode = versionCode.toIntOrNull() ?: 1,
                                     description = description.ifBlank { null }
                                 )
                                 if (result) {
@@ -218,9 +172,6 @@ private suspend fun uploadFile(
     context: android.content.Context,
     serverUrl: String,
     uri: Uri,
-    packageName: String,
-    versionName: String,
-    versionCode: Int,
     description: String?
 ): Boolean = withContext(Dispatchers.IO) {
     val boundary = "----${System.currentTimeMillis()}"
@@ -246,9 +197,6 @@ private suspend fun uploadFile(
             outputStream.write("$value$lineEnd".toByteArray())
         }
 
-        writeField("packageName", packageName)
-        writeField("versionName", versionName)
-        writeField("versionCode", versionCode.toString())
         description?.let { writeField("description", it) }
 
         // Write file

@@ -8,9 +8,6 @@ import org.jetbrains.exposed.sql.kotlin.datetime.datetime
 
 object ApkFiles : IntIdTable("apk_files") {
     val fileName = varchar("file_name", 255)
-    val packageName = varchar("package_name", 255)
-    val versionName = varchar("version_name", 100)
-    val versionCode = integer("version_code")
     val fileSize = long("file_size")
     val description = text("description").nullable()
     val storagePath = varchar("storage_path", 500)
@@ -22,9 +19,6 @@ class ApkFileEntity(id: EntityID<Int>) : IntEntity(id) {
     companion object : IntEntityClass<ApkFileEntity>(ApkFiles)
 
     var fileName by ApkFiles.fileName
-    var packageName by ApkFiles.packageName
-    var versionName by ApkFiles.versionName
-    var versionCode by ApkFiles.versionCode
     var fileSize by ApkFiles.fileSize
     var description by ApkFiles.description
     var storagePath by ApkFiles.storagePath

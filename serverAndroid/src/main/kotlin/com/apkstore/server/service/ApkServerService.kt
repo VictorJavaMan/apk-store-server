@@ -98,7 +98,7 @@ class ApkServerService : Service() {
                 "APK Server",
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
-                description = "APK Store Server notifications"
+                description = "APK For Testers Server notifications"
                 setShowBadge(false)
             }
 
@@ -124,7 +124,7 @@ class ApkServerService : Service() {
         )
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("APK Store Server")
+            .setContentTitle("APK For Testers Server")
             .setContentText(contentText)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setOngoing(true)

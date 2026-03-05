@@ -60,25 +60,9 @@ fun ApkListItem(
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                Text(
-                    text = apk.packageName,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-
-                Spacer(modifier = Modifier.height(4.dp))
-
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    AssistChip(
-                        onClick = {},
-                        label = { Text("v${apk.versionName}") },
-                        modifier = Modifier.height(24.dp)
-                    )
-
                     AssistChip(
                         onClick = {},
                         label = { Text(apk.fileSizeFormatted) },

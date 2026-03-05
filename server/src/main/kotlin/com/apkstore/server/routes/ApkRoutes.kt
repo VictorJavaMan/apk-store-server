@@ -54,9 +54,6 @@ fun Route.apkRoutes() {
         post("/upload") {
             val multipart = call.receiveMultipart()
             var fileName: String? = null
-            var packageName = "unknown"
-            var versionName = "1.0"
-            var versionCode = 1
             var description: String? = null
             var savedFile: File? = null
 
@@ -64,9 +61,6 @@ fun Route.apkRoutes() {
                 when (part) {
                     is PartData.FormItem -> {
                         when (part.name) {
-                            "packageName" -> packageName = part.value
-                            "versionName" -> versionName = part.value
-                            "versionCode" -> versionCode = part.value.toIntOrNull() ?: 1
                             "description" -> description = part.value
                         }
                     }
@@ -88,9 +82,6 @@ fun Route.apkRoutes() {
                 val apkInfo = transaction {
                     ApkFileEntity.new {
                         this.fileName = finalFileName
-                        this.packageName = packageName
-                        this.versionName = versionName
-                        this.versionCode = versionCode
                         this.fileSize = finalSavedFile.length()
                         this.description = description
                         this.storagePath = finalSavedFile.absolutePath
@@ -180,8 +171,7 @@ fun Route.apkRoutes() {
             val apps = transaction {
                 ApkFileEntity.all()
                     .filter {
-                        it.fileName.contains(query, ignoreCase = true) ||
-                        it.packageName.contains(query, ignoreCase = true)
+                        it.fileName.contains(query, ignoreCase = true)
                     }
                     .map { it.toApkInfo() }
             }
@@ -193,9 +183,6 @@ fun Route.apkRoutes() {
 private fun ApkFileEntity.toApkInfo() = ApkInfo(
     id = this.id.value,
     fileName = this.fileName,
-    packageName = this.packageName,
-    versionName = this.versionName,
-    versionCode = this.versionCode,
     fileSize = this.fileSize,
     description = this.description,
     uploadedAt = this.uploadedAt.toString(),

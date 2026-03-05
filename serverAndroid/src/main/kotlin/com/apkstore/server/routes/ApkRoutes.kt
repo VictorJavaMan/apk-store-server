@@ -58,9 +58,6 @@ fun Route.apkRoutes(context: Context) {
         post("/upload") {
             val multipart = call.receiveMultipart()
             var fileName: String? = null
-            var packageName = "unknown"
-            var versionName = "1.0"
-            var versionCode = 1
             var description: String? = null
             var savedFile: File? = null
 
@@ -68,9 +65,6 @@ fun Route.apkRoutes(context: Context) {
                 when (part) {
                     is PartData.FormItem -> {
                         when (part.name) {
-                            "packageName" -> packageName = part.value
-                            "versionName" -> versionName = part.value
-                            "versionCode" -> versionCode = part.value.toIntOrNull() ?: 1
                             "description" -> description = part.value
                         }
                     }
@@ -93,9 +87,6 @@ fun Route.apkRoutes(context: Context) {
 
                 val id = db.insertApk(
                     fileName = fileName!!,
-                    packageName = packageName,
-                    versionName = versionName,
-                    versionCode = versionCode,
                     fileSize = savedFile!!.length(),
                     description = description,
                     storagePath = savedFile!!.absolutePath,

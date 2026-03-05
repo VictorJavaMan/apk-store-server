@@ -47,7 +47,7 @@ fun ApkListScreen(
                             )
                         )
                     } else {
-                        Text("APK Store")
+                        Text("APK For Testers")
                     }
                 },
                 actions = {

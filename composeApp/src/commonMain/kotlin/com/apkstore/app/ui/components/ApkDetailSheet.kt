@@ -58,11 +58,6 @@ fun ApkDetailSheet(
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold
                     )
-                    Text(
-                        text = apk.packageName,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
                 }
             }
 
@@ -73,7 +68,6 @@ fun ApkDetailSheet(
             Spacer(modifier = Modifier.height(16.dp))
 
             // Info rows
-            InfoRow(icon = Icons.Default.Info, label = "Version", value = "${apk.versionName} (${apk.versionCode})")
             InfoRow(icon = Icons.Default.List, label = "Size", value = apk.fileSizeFormatted)
             InfoRow(icon = Icons.Default.KeyboardArrowDown, label = "Downloads", value = "${apk.downloadCount}")
             InfoRow(icon = Icons.Default.DateRange, label = "Uploaded", value = apk.uploadedAt.substringBefore("T"))

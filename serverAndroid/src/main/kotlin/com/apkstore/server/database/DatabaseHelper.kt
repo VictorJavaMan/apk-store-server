@@ -14,9 +14,6 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
             CREATE TABLE $TABLE_APK_FILES (
                 $COLUMN_ID INTEGER PRIMARY KEY AUTOINCREMENT,
                 $COLUMN_FILE_NAME TEXT NOT NULL,
-                $COLUMN_PACKAGE_NAME TEXT NOT NULL,
-                $COLUMN_VERSION_NAME TEXT NOT NULL,
-                $COLUMN_VERSION_CODE INTEGER NOT NULL,
                 $COLUMN_FILE_SIZE INTEGER NOT NULL,
                 $COLUMN_DESCRIPTION TEXT,
                 $COLUMN_STORAGE_PATH TEXT NOT NULL,
@@ -33,9 +30,6 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
 
     fun insertApk(
         fileName: String,
-        packageName: String,
-        versionName: String,
-        versionCode: Int,
         fileSize: Long,
         description: String?,
         storagePath: String,
@@ -43,9 +37,6 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
     ): Long {
         val values = ContentValues().apply {
             put(COLUMN_FILE_NAME, fileName)
-            put(COLUMN_PACKAGE_NAME, packageName)
-            put(COLUMN_VERSION_NAME, versionName)
-            put(COLUMN_VERSION_CODE, versionCode)
             put(COLUMN_FILE_SIZE, fileSize)
             put(COLUMN_DESCRIPTION, description)
             put(COLUMN_STORAGE_PATH, storagePath)
@@ -117,8 +108,8 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         val searchPattern = "%$query%"
         val cursor = readableDatabase.query(
             TABLE_APK_FILES, null,
-            "$COLUMN_FILE_NAME LIKE ? OR $COLUMN_PACKAGE_NAME LIKE ?",
-            arrayOf(searchPattern, searchPattern),
+            "$COLUMN_FILE_NAME LIKE ?",
+            arrayOf(searchPattern),
             null, null, "$COLUMN_ID DESC"
         )
         cursor.use {
@@ -133,9 +124,6 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         return ApkInfo(
             id = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_ID)),
             fileName = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_FILE_NAME)),
-            packageName = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_PACKAGE_NAME)),
-            versionName = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_VERSION_NAME)),
-            versionCode = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_VERSION_CODE)),
             fileSize = cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_FILE_SIZE)),
             description = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_DESCRIPTION)),
             uploadedAt = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_UPLOADED_AT)),
@@ -145,14 +133,11 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
 
     companion object {
         private const val DATABASE_NAME = "apkstore.db"
-        private const val DATABASE_VERSION = 1
+        private const val DATABASE_VERSION = 2
 
         const val TABLE_APK_FILES = "apk_files"
         const val COLUMN_ID = "id"
         const val COLUMN_FILE_NAME = "file_name"
-        const val COLUMN_PACKAGE_NAME = "package_name"
-        const val COLUMN_VERSION_NAME = "version_name"
-        const val COLUMN_VERSION_CODE = "version_code"
         const val COLUMN_FILE_SIZE = "file_size"
         const val COLUMN_DESCRIPTION = "description"
         const val COLUMN_STORAGE_PATH = "storage_path"

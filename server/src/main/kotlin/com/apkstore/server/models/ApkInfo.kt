@@ -7,9 +7,6 @@ import kotlinx.serialization.Serializable
 data class ApkInfo(
     val id: Int,
     val fileName: String,
-    val packageName: String,
-    val versionName: String,
-    val versionCode: Int,
     val fileSize: Long,
     val description: String?,
     val uploadedAt: String,

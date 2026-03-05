@@ -25,9 +25,9 @@ fun Application.configureRouting(context: Context) {
                     """
                     <!DOCTYPE html>
                     <html>
-                    <head><title>APK Store Server</title></head>
+                    <head><title>APK For Testers Server</title></head>
                     <body style="font-family: sans-serif; padding: 40px; text-align: center;">
-                        <h1>APK Store Server (Android)</h1>
+                        <h1>APK For Testers Server (Android)</h1>
                         <p>Server is running!</p>
                         <h3>API Endpoints:</h3>
                         <ul style="list-style: none; padding: 0;">
