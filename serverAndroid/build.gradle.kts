@@ -22,12 +22,6 @@ kotlin {
             implementation(libs.ktor.server.auto.head.response.common)
             implementation(libs.ktor.serialization.kotlinx.json)
 
-            implementation(libs.exposed.core)
-            implementation(libs.exposed.jdbc)
-            implementation(libs.exposed.dao)
-            implementation(libs.exposed.kotlin.datetime)
-            implementation(libs.sqlite.jdbc)
-
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.coroutines.android)
             implementation(libs.kotlinx.serialization.json)

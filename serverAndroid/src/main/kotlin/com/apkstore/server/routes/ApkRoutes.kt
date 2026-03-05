@@ -1,9 +1,8 @@
 package com.apkstore.server.routes
 
 import android.content.Context
-import com.apkstore.server.database.ApkFileEntity
-import com.apkstore.server.database.ApkFiles
-import com.apkstore.server.models.ApkInfo
+import android.util.Log
+import com.apkstore.server.database.DatabaseHelper
 import com.apkstore.server.models.ApkListResponse
 import com.apkstore.server.models.MessageResponse
 import com.apkstore.server.models.UploadResponse
@@ -16,20 +15,27 @@ import io.ktor.server.routing.*
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import org.jetbrains.exposed.sql.transactions.transaction
 import java.io.File
 import java.util.*
 
+private const val TAG = "ApkRoutes"
+
 fun Route.apkRoutes(context: Context) {
     val uploadDir = File(context.filesDir, "uploads").also { it.mkdirs() }
+    val db = DatabaseHelper.getInstance(context)
 
     route("/api/apks") {
         // Get all APKs
         get {
-            val apps = transaction {
-                ApkFileEntity.all().map { it.toApkInfo() }
+            Log.d(TAG, "GET /api/apks")
+            try {
+                val apps = db.getAllApks()
+                Log.d(TAG, "Found ${apps.size} apps")
+                call.respond(ApkListResponse(apps = apps, total = apps.size))
+            } catch (e: Exception) {
+                Log.e(TAG, "Error getting apks", e)
+                call.respond(HttpStatusCode.InternalServerError, MessageResponse(false, e.message ?: "Unknown error"))
             }
-            call.respond(ApkListResponse(apps = apps, total = apps.size))
         }
 
         // Get single APK info
@@ -40,10 +46,7 @@ fun Route.apkRoutes(context: Context) {
                 return@get
             }
 
-            val apk = transaction {
-                ApkFileEntity.findById(id)?.toApkInfo()
-            }
-
+            val apk = db.getApkById(id)
             if (apk != null) {
                 call.respond(apk)
             } else {
@@ -84,21 +87,22 @@ fun Route.apkRoutes(context: Context) {
             }
 
             if (savedFile != null && fileName != null) {
-                val finalFileName = fileName!!
-                val finalSavedFile = savedFile!!
-                val apkInfo = transaction {
-                    ApkFileEntity.new {
-                        this.fileName = finalFileName
-                        this.packageName = packageName
-                        this.versionName = versionName
-                        this.versionCode = versionCode
-                        this.fileSize = finalSavedFile.length()
-                        this.description = description
-                        this.storagePath = finalSavedFile.absolutePath
-                        this.uploadedAt = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
-                        this.downloadCount = 0
-                    }.toApkInfo()
-                }
+                val uploadedAt = Clock.System.now()
+                    .toLocalDateTime(TimeZone.currentSystemDefault())
+                    .toString()
+
+                val id = db.insertApk(
+                    fileName = fileName!!,
+                    packageName = packageName,
+                    versionName = versionName,
+                    versionCode = versionCode,
+                    fileSize = savedFile!!.length(),
+                    description = description,
+                    storagePath = savedFile!!.absolutePath,
+                    uploadedAt = uploadedAt
+                )
+
+                val apkInfo = db.getApkById(id.toInt())
 
                 call.respond(UploadResponse(
                     success = true,
@@ -121,17 +125,12 @@ fun Route.apkRoutes(context: Context) {
                 return@get
             }
 
-            val apkData = transaction {
-                ApkFileEntity.findById(id)?.let { entity ->
-                    entity.downloadCount++
-                    Triple(entity.storagePath, entity.fileName, true)
-                }
-            }
-
-            if (apkData != null) {
-                val (storagePath, apkFileName, _) = apkData
+            val pathInfo = db.getApkStoragePath(id)
+            if (pathInfo != null) {
+                val (storagePath, apkFileName) = pathInfo
                 val file = File(storagePath)
                 if (file.exists()) {
+                    db.incrementDownloadCount(id)
                     call.response.header(
                         HttpHeaders.ContentDisposition,
                         ContentDisposition.Attachment.withParameter(
@@ -156,19 +155,11 @@ fun Route.apkRoutes(context: Context) {
                 return@delete
             }
 
-            val deleted = transaction {
-                val entity = ApkFileEntity.findById(id)
-                if (entity != null) {
-                    val file = File(entity.storagePath)
-                    file.delete()
-                    entity.delete()
-                    true
-                } else {
-                    false
-                }
-            }
-
-            if (deleted) {
+            val pathInfo = db.getApkStoragePath(id)
+            if (pathInfo != null) {
+                val (storagePath, _) = pathInfo
+                File(storagePath).delete()
+                db.deleteApk(id)
                 call.respond(MessageResponse(success = true, message = "APK deleted"))
             } else {
                 call.respond(HttpStatusCode.NotFound, MessageResponse(success = false, message = "APK not found"))
@@ -178,27 +169,8 @@ fun Route.apkRoutes(context: Context) {
         // Search APKs
         get("/search/{query}") {
             val query = call.parameters["query"] ?: ""
-            val apps = transaction {
-                ApkFileEntity.all()
-                    .filter {
-                        it.fileName.contains(query, ignoreCase = true) ||
-                        it.packageName.contains(query, ignoreCase = true)
-                    }
-                    .map { it.toApkInfo() }
-            }
+            val apps = db.searchApks(query)
             call.respond(ApkListResponse(apps = apps, total = apps.size))
         }
     }
 }
-
-private fun ApkFileEntity.toApkInfo() = ApkInfo(
-    id = this.id.value,
-    fileName = this.fileName,
-    packageName = this.packageName,
-    versionName = this.versionName,
-    versionCode = this.versionCode,
-    fileSize = this.fileSize,
-    description = this.description,
-    uploadedAt = this.uploadedAt.toString(),
-    downloadCount = this.downloadCount
-)

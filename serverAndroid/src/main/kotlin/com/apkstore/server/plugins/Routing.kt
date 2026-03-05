@@ -17,20 +17,32 @@ fun Application.configureRouting(context: Context) {
         apkRoutes(context)
 
         get("/") {
-            call.respondText(
-                """
-                APK Store Server (Android)
-
-                API Endpoints:
-                - GET /api/apks - List all APKs
-                - GET /api/apks/{id} - Get APK info
-                - POST /api/apks/upload - Upload APK
-                - GET /api/apks/{id}/download - Download APK
-                - DELETE /api/apks/{id} - Delete APK
-                - GET /api/apks/search/{query} - Search APKs
-                """.trimIndent(),
-                ContentType.Text.Plain
-            )
+            try {
+                val html = context.assets.open("web/index.html").bufferedReader().readText()
+                call.respondText(html, ContentType.Text.Html)
+            } catch (e: Exception) {
+                call.respondText(
+                    """
+                    <!DOCTYPE html>
+                    <html>
+                    <head><title>APK Store Server</title></head>
+                    <body style="font-family: sans-serif; padding: 40px; text-align: center;">
+                        <h1>APK Store Server (Android)</h1>
+                        <p>Server is running!</p>
+                        <h3>API Endpoints:</h3>
+                        <ul style="list-style: none; padding: 0;">
+                            <li>GET /api/apks - List all APKs</li>
+                            <li>GET /api/apks/{id} - Get APK info</li>
+                            <li>POST /api/apks/upload - Upload APK</li>
+                            <li>GET /api/apks/{id}/download - Download APK</li>
+                            <li>DELETE /api/apks/{id} - Delete APK</li>
+                        </ul>
+                    </body>
+                    </html>
+                    """.trimIndent(),
+                    ContentType.Text.Html
+                )
+            }
         }
 
         get("/health") {

@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import com.apkstore.app.ui.ApkStoreViewModel
 import com.apkstore.app.ui.screens.ApkListScreen
 import com.apkstore.app.ui.theme.ApkStoreTheme
+import com.apkstore.server.service.ApkServerService
 import org.koin.compose.viewmodel.koinViewModel
 
 enum class AppScreen {
@@ -22,8 +23,11 @@ fun ServerApp(
 ) {
     ApkStoreTheme {
         var currentScreen by remember { mutableStateOf(AppScreen.Apps) }
+        var showUploadDialog by remember { mutableStateOf(false) }
+
         val viewModel: ApkStoreViewModel = koinViewModel()
         val state by viewModel.state.collectAsState()
+        val serverState by ApkServerService.serverState.collectAsState()
 
         Scaffold(
             bottomBar = {
@@ -54,7 +58,11 @@ fun ServerApp(
                             onApkDismiss = { viewModel.selectApk(null) },
                             onDownload = { id -> onDownload(viewModel.getDownloadUrl(id)) },
                             onDelete = viewModel::deleteApk,
-                            onUploadClick = { viewModel.showUploadDialog(true) }
+                            onUploadClick = {
+                                if (serverState.isRunning && serverState.serverUrl != null) {
+                                    showUploadDialog = true
+                                }
+                            }
                         )
                     }
                     AppScreen.Server -> {
@@ -62,6 +70,17 @@ fun ServerApp(
                     }
                 }
             }
+        }
+
+        // Upload dialog
+        if (showUploadDialog && serverState.serverUrl != null) {
+            UploadApkDialog(
+                serverUrl = serverState.serverUrl!!,
+                onDismiss = { showUploadDialog = false },
+                onSuccess = {
+                    viewModel.loadApks()
+                }
+            )
         }
     }
 }

@@ -1,7 +1,7 @@
 package com.apkstore.server
 
 import android.content.Context
-import com.apkstore.server.database.DatabaseFactory
+import android.util.Log
 import com.apkstore.server.plugins.configureCors
 import com.apkstore.server.plugins.configureRouting
 import com.apkstore.server.plugins.configureSerialization
@@ -31,7 +31,7 @@ class ApkServer(
 
         serverJob = scope.launch {
             try {
-                DatabaseFactory.init(context)
+                Log.d("ApkServer", "Starting server on port $port")
 
                 server = embeddedServer(CIO, port = port, host = "0.0.0.0") {
                     module(context)
@@ -40,8 +40,10 @@ class ApkServer(
                 }
 
                 isRunning = true
+                Log.d("ApkServer", "Server started at ${getServerUrl()}")
                 onStatusChange?.invoke(true, getServerUrl())
             } catch (e: Exception) {
+                Log.e("ApkServer", "Failed to start server", e)
                 isRunning = false
                 onStatusChange?.invoke(false, e.message)
             }

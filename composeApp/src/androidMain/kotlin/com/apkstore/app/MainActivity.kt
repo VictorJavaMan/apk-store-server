@@ -17,6 +17,7 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.GlobalContext
 import org.koin.core.context.startKoin
+import org.koin.core.context.stopKoin
 
 class MainActivity : ComponentActivity() {
 
@@ -27,12 +28,12 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        if (GlobalContext.getOrNull() == null) {
-            startKoin {
-                androidLogger()
-                androidContext(this@MainActivity)
-                modules(appModule("http://localhost:8080"))
-            }
+        // Always restart Koin with fresh state
+        GlobalContext.getOrNull()?.let { stopKoin() }
+        startKoin {
+            androidLogger()
+            androidContext(this@MainActivity)
+            modules(appModule("http://127.0.0.1:8080"))
         }
 
         requestNotificationPermission()

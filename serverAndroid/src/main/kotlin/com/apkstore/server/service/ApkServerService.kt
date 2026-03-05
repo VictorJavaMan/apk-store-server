@@ -7,10 +7,10 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
-import android.os.Binder
 import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.apkstore.server.ApkServer
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,25 +19,19 @@ import kotlinx.coroutines.flow.asStateFlow
 
 class ApkServerService : Service() {
 
-    private val binder = LocalBinder()
     private var server: ApkServer? = null
     private var wakeLock: PowerManager.WakeLock? = null
 
-    private val _serverState = MutableStateFlow(ServerState())
-    val serverState: StateFlow<ServerState> = _serverState.asStateFlow()
-
-    inner class LocalBinder : Binder() {
-        fun getService(): ApkServerService = this@ApkServerService
-    }
-
-    override fun onBind(intent: Intent?): IBinder = binder
+    override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onCreate() {
         super.onCreate()
+        Log.d(TAG, "Service onCreate")
         createNotificationChannel()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        Log.d(TAG, "onStartCommand: action=${intent?.action}")
         when (intent?.action) {
             ACTION_START -> startServer(intent.getIntExtra(EXTRA_PORT, 8080))
             ACTION_STOP -> stopServer()
@@ -46,12 +40,18 @@ class ApkServerService : Service() {
     }
 
     private fun startServer(port: Int) {
+        Log.d(TAG, "startServer: port=$port, isRunning=${server?.isRunning}")
         if (server?.isRunning == true) return
+
+        // Start foreground immediately
+        _serverState.value = ServerState(isRunning = false, error = "Starting...")
+        startForeground(NOTIFICATION_ID, createNotification())
 
         acquireWakeLock()
 
         server = ApkServer(applicationContext, port).apply {
             onStatusChange = { running, urlOrError ->
+                Log.d(TAG, "Server status changed: running=$running, url=$urlOrError")
                 _serverState.value = if (running) {
                     ServerState(isRunning = true, serverUrl = urlOrError)
                 } else {
@@ -61,8 +61,6 @@ class ApkServerService : Service() {
             }
             start()
         }
-
-        startForeground(NOTIFICATION_ID, createNotification())
     }
 
     private fun stopServer() {
@@ -149,6 +147,7 @@ class ApkServerService : Service() {
     }
 
     companion object {
+        private const val TAG = "ApkServerService"
         const val ACTION_START = "com.apkstore.server.START"
         const val ACTION_STOP = "com.apkstore.server.STOP"
         const val EXTRA_PORT = "port"
@@ -156,7 +155,11 @@ class ApkServerService : Service() {
         private const val CHANNEL_ID = "apk_server_channel"
         private const val NOTIFICATION_ID = 1
 
+        private val _serverState = MutableStateFlow(ServerState())
+        val serverState: StateFlow<ServerState> = _serverState.asStateFlow()
+
         fun startServer(context: Context, port: Int = 8080) {
+            Log.d(TAG, "startServer called: port=$port")
             val intent = Intent(context, ApkServerService::class.java).apply {
                 action = ACTION_START
                 putExtra(EXTRA_PORT, port)
@@ -169,6 +172,7 @@ class ApkServerService : Service() {
         }
 
         fun stopServer(context: Context) {
+            Log.d(TAG, "stopServer called")
             val intent = Intent(context, ApkServerService::class.java).apply {
                 action = ACTION_STOP
             }

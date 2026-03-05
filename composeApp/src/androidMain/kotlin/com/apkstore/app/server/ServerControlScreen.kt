@@ -1,10 +1,5 @@
 package com.apkstore.app.server
 
-import android.content.ComponentName
-import android.content.Context
-import android.content.Intent
-import android.content.ServiceConnection
-import android.os.IBinder
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -17,8 +12,6 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.apkstore.server.service.ApkServerService
-import com.apkstore.server.service.ServerState
-import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun ServerControlScreen(
@@ -27,36 +20,8 @@ fun ServerControlScreen(
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
 
-    var serverState by remember { mutableStateOf(ServerState()) }
+    val serverState by ApkServerService.serverState.collectAsState()
     var port by remember { mutableStateOf("8080") }
-    var service by remember { mutableStateOf<ApkServerService?>(null) }
-
-    val serviceConnection = remember {
-        object : ServiceConnection {
-            override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
-                service = (binder as? ApkServerService.LocalBinder)?.getService()
-            }
-
-            override fun onServiceDisconnected(name: ComponentName?) {
-                service = null
-            }
-        }
-    }
-
-    DisposableEffect(Unit) {
-        val intent = Intent(context, ApkServerService::class.java)
-        context.bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
-
-        onDispose {
-            context.unbindService(serviceConnection)
-        }
-    }
-
-    LaunchedEffect(service) {
-        service?.serverState?.collectLatest { state ->
-            serverState = state
-        }
-    }
 
     Card(
         modifier = modifier
@@ -84,21 +49,15 @@ fun ServerControlScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(12.dp)
-                        .padding(end = 8.dp)
-                ) {
-                    Surface(
-                        modifier = Modifier.fillMaxSize(),
-                        shape = RoundedCornerShape(50),
-                        color = if (serverState.isRunning) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.outline
-                        }
-                    ) {}
-                }
+                Surface(
+                    modifier = Modifier.size(12.dp),
+                    shape = RoundedCornerShape(50),
+                    color = if (serverState.isRunning) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.outline
+                    }
+                ) {}
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = if (serverState.isRunning) "Running" else "Stopped",
@@ -148,12 +107,14 @@ fun ServerControlScreen(
 
             // Error message
             serverState.error?.let { error ->
-                Text(
-                    text = "Error: $error",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error
-                )
-                Spacer(modifier = Modifier.height(16.dp))
+                if (!serverState.isRunning && error != "Starting...") {
+                    Text(
+                        text = "Error: $error",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
             }
 
             // Port input (only when stopped)
