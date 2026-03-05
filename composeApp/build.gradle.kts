@@ -70,6 +70,7 @@ kotlin {
             implementation(libs.kotlinx.coroutines.android)
             implementation(libs.koin.android)
             implementation(project(":serverAndroid"))
+            implementation("com.squareup.okhttp3:okhttp:4.12.0")
         }
 
         jsMain.dependencies {

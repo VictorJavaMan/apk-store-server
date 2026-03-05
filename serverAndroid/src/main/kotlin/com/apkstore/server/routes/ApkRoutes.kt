@@ -56,54 +56,81 @@ fun Route.apkRoutes(context: Context) {
 
         // Upload APK
         post("/upload") {
-            val multipart = call.receiveMultipart()
-            var fileName: String? = null
-            var description: String? = null
-            var savedFile: File? = null
+            Log.d(TAG, "POST /api/apks/upload")
+            try {
+                val multipart = call.receiveMultipart()
+                var fileName: String? = null
+                var description: String? = null
+                var savedFile: File? = null
 
-            multipart.forEachPart { part ->
-                when (part) {
-                    is PartData.FormItem -> {
-                        when (part.name) {
-                            "description" -> description = part.value
+                multipart.forEachPart { part ->
+                    Log.d(TAG, "Processing part: ${part.name}, type: ${part::class.simpleName}")
+                    when (part) {
+                        is PartData.FormItem -> {
+                            when (part.name) {
+                                "description" -> description = part.value
+                            }
                         }
-                    }
-                    is PartData.FileItem -> {
-                        fileName = part.originalFileName ?: "${UUID.randomUUID()}.apk"
-                        val fileBytes = part.streamProvider().readBytes()
-                        savedFile = File(uploadDir, "${UUID.randomUUID()}_$fileName").also {
-                            it.writeBytes(fileBytes)
+                        is PartData.FileItem -> {
+                            fileName = part.originalFileName ?: "${UUID.randomUUID()}.apk"
+                            Log.d(TAG, "Receiving file: $fileName")
+
+                            // Stream file directly to disk without loading into memory
+                            val targetFile = File(uploadDir, "${UUID.randomUUID()}_$fileName")
+                            targetFile.outputStream().buffered().use { output ->
+                                part.streamProvider().use { input ->
+                                    val buffer = ByteArray(8192)
+                                    var bytesRead: Int
+                                    var totalBytes = 0L
+                                    while (input.read(buffer).also { bytesRead = it } != -1) {
+                                        output.write(buffer, 0, bytesRead)
+                                        totalBytes += bytesRead
+                                    }
+                                    Log.d(TAG, "File streamed: $totalBytes bytes")
+                                }
+                            }
+                            savedFile = targetFile
+                            Log.d(TAG, "File saved to: ${savedFile?.absolutePath}")
                         }
+                        else -> {}
                     }
-                    else -> {}
+                    part.dispose()
                 }
-                part.dispose()
-            }
 
-            if (savedFile != null && fileName != null) {
-                val uploadedAt = Clock.System.now()
-                    .toLocalDateTime(TimeZone.currentSystemDefault())
-                    .toString()
+                if (savedFile != null && fileName != null) {
+                    val uploadedAt = Clock.System.now()
+                        .toLocalDateTime(TimeZone.currentSystemDefault())
+                        .toString()
 
-                val id = db.insertApk(
-                    fileName = fileName!!,
-                    fileSize = savedFile!!.length(),
-                    description = description,
-                    storagePath = savedFile!!.absolutePath,
-                    uploadedAt = uploadedAt
-                )
+                    Log.d(TAG, "Inserting into database: $fileName")
+                    val id = db.insertApk(
+                        fileName = fileName!!,
+                        fileSize = savedFile!!.length(),
+                        description = description,
+                        storagePath = savedFile!!.absolutePath,
+                        uploadedAt = uploadedAt
+                    )
+                    Log.d(TAG, "Inserted with id: $id")
 
-                val apkInfo = db.getApkById(id.toInt())
+                    val apkInfo = db.getApkById(id.toInt())
 
-                call.respond(UploadResponse(
-                    success = true,
-                    message = "File uploaded successfully",
-                    apkInfo = apkInfo
-                ))
-            } else {
-                call.respond(HttpStatusCode.BadRequest, UploadResponse(
+                    call.respond(UploadResponse(
+                        success = true,
+                        message = "File uploaded successfully",
+                        apkInfo = apkInfo
+                    ))
+                } else {
+                    Log.w(TAG, "No file received: fileName=$fileName, savedFile=$savedFile")
+                    call.respond(HttpStatusCode.BadRequest, UploadResponse(
+                        success = false,
+                        message = "No file provided"
+                    ))
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Upload error", e)
+                call.respond(HttpStatusCode.InternalServerError, UploadResponse(
                     success = false,
-                    message = "No file provided"
+                    message = "Upload error: ${e.message}"
                 ))
             }
         }

@@ -19,9 +19,15 @@ import androidx.compose.ui.window.Dialog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
-import java.net.HttpURLConnection
-import java.net.URL
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody
+import okio.BufferedSink
+import okio.source
+import org.json.JSONObject
+import java.util.concurrent.TimeUnit
 
 @Composable
 fun UploadApkDialog(
@@ -176,56 +182,51 @@ private suspend fun uploadFile(
     fileName: String,
     description: String?
 ): Boolean = withContext(Dispatchers.IO) {
-    val boundary = "----${System.currentTimeMillis()}"
-    val lineEnd = "\r\n"
+    val client = OkHttpClient.Builder()
+        .connectTimeout(60, TimeUnit.SECONDS)
+        .writeTimeout(5, TimeUnit.MINUTES)
+        .readTimeout(60, TimeUnit.SECONDS)
+        .build()
 
-    val url = URL("$serverUrl/api/apks/upload")
-    val connection = url.openConnection() as HttpURLConnection
+    // Get file size for content length
+    val fileSize = context.contentResolver.openAssetFileDescriptor(uri, "r")?.use {
+        it.length
+    } ?: -1L
 
-    try {
-        connection.doOutput = true
-        connection.doInput = true
-        connection.useCaches = false
-        connection.requestMethod = "POST"
-        connection.setRequestProperty("Content-Type", "multipart/form-data; boundary=$boundary")
+    // Create streaming request body
+    val fileBody = object : RequestBody() {
+        override fun contentType() = "application/vnd.android.package-archive".toMediaType()
 
-        val outputStream = connection.outputStream
+        override fun contentLength() = fileSize
 
-        // Write form fields
-        fun writeField(name: String, value: String) {
-            outputStream.write("--$boundary$lineEnd".toByteArray())
-            outputStream.write("Content-Disposition: form-data; name=\"$name\"$lineEnd".toByteArray())
-            outputStream.write(lineEnd.toByteArray())
-            outputStream.write("$value$lineEnd".toByteArray())
+        override fun writeTo(sink: BufferedSink) {
+            context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                sink.writeAll(inputStream.source())
+            }
         }
-
-        description?.let { writeField("description", it) }
-
-        // Write file
-        val inputStream = context.contentResolver.openInputStream(uri)
-        val uploadFileName = fileName.ifEmpty { "app.apk" }
-
-        outputStream.write("--$boundary$lineEnd".toByteArray())
-        outputStream.write("Content-Disposition: form-data; name=\"file\"; filename=\"$uploadFileName\"$lineEnd".toByteArray())
-        outputStream.write("Content-Type: application/vnd.android.package-archive$lineEnd".toByteArray())
-        outputStream.write(lineEnd.toByteArray())
-
-        inputStream?.copyTo(outputStream)
-        inputStream?.close()
-
-        outputStream.write(lineEnd.toByteArray())
-        outputStream.write("--$boundary--$lineEnd".toByteArray())
-        outputStream.flush()
-        outputStream.close()
-
-        val responseCode = connection.responseCode
-        if (responseCode != 200) {
-            val errorStream = connection.errorStream
-            val errorBody = errorStream?.bufferedReader()?.readText() ?: "Unknown error"
-            throw Exception("Server error $responseCode: $errorBody")
-        }
-        true
-    } finally {
-        connection.disconnect()
     }
+
+    val multipartBuilder = MultipartBody.Builder()
+        .setType(MultipartBody.FORM)
+        .addFormDataPart("file", fileName, fileBody)
+
+    description?.let {
+        multipartBuilder.addFormDataPart("description", it)
+    }
+
+    val request = Request.Builder()
+        .url("$serverUrl/api/apks/upload")
+        .post(multipartBuilder.build())
+        .build()
+
+    val response = client.newCall(request).execute()
+
+    if (!response.isSuccessful) {
+        val body = response.body?.string() ?: "Unknown error"
+        throw Exception("Server error ${response.code}: $body")
+    }
+
+    val body = response.body?.string() ?: "{}"
+    val json = JSONObject(body)
+    json.optBoolean("success", false)
 }
