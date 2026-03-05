@@ -907,6 +907,12 @@
                     body: formData
                 });
 
+                if (!response.ok) {
+                    const text = await response.text();
+                    showToast('Upload failed: ' + response.status + ' - ' + text);
+                    return;
+                }
+
                 const result = await response.json();
                 if (result.success) {
                     showToast('Upload successful!');
@@ -916,7 +922,8 @@
                     showToast('Upload failed: ' + result.message);
                 }
             } catch (error) {
-                showToast('Upload failed');
+                console.error('Upload error:', error);
+                showToast('Upload failed: ' + error.message);
             }
         });
 

@@ -135,6 +135,7 @@ fun UploadApkDialog(
                                     context = context,
                                     serverUrl = serverUrl,
                                     uri = selectedUri!!,
+                                    fileName = fileName,
                                     description = description.ifBlank { null }
                                 )
                                 if (result) {
@@ -172,6 +173,7 @@ private suspend fun uploadFile(
     context: android.content.Context,
     serverUrl: String,
     uri: Uri,
+    fileName: String,
     description: String?
 ): Boolean = withContext(Dispatchers.IO) {
     val boundary = "----${System.currentTimeMillis()}"
@@ -201,10 +203,10 @@ private suspend fun uploadFile(
 
         // Write file
         val inputStream = context.contentResolver.openInputStream(uri)
-        val fileName = uri.lastPathSegment ?: "app.apk"
+        val uploadFileName = fileName.ifEmpty { "app.apk" }
 
         outputStream.write("--$boundary$lineEnd".toByteArray())
-        outputStream.write("Content-Disposition: form-data; name=\"file\"; filename=\"$fileName\"$lineEnd".toByteArray())
+        outputStream.write("Content-Disposition: form-data; name=\"file\"; filename=\"$uploadFileName\"$lineEnd".toByteArray())
         outputStream.write("Content-Type: application/vnd.android.package-archive$lineEnd".toByteArray())
         outputStream.write(lineEnd.toByteArray())
 
@@ -216,7 +218,13 @@ private suspend fun uploadFile(
         outputStream.flush()
         outputStream.close()
 
-        connection.responseCode == 200
+        val responseCode = connection.responseCode
+        if (responseCode != 200) {
+            val errorStream = connection.errorStream
+            val errorBody = errorStream?.bufferedReader()?.readText() ?: "Unknown error"
+            throw Exception("Server error $responseCode: $errorBody")
+        }
+        true
     } finally {
         connection.disconnect()
     }
