@@ -20,6 +20,10 @@ uploads/
 # OS
 .DS_Store
 
-# Mobile apps (not needed for server)
-composeApp/
+# iOS app (not needed for now)
 iosApp/
+
+# Keystore
+keystore/
+*.keystore
+*.jks
