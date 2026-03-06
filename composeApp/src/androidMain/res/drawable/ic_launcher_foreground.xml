@@ -4,26 +4,42 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+
+    <!-- Blue circle background -->
     <path
-        android:fillColor="#3DDC84"
+        android:fillColor="#2196F3"
         android:pathData="M54,54m-40,0a40,40 0,1 1,80 0a40,40 0,1 1,-80 0"/>
+
+    <!-- White file/document shape with folded corner -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M54,30L54,30A20,20 0,0 1,74 50L74,58A20,20 0,0 1,54 78L54,78A20,20 0,0 1,34 58L34,50A20,20 0,0 1,54 30z"/>
+        android:pathData="M36,28L60,28L72,40L72,80L36,80Z"/>
+
+    <!-- Folded corner -->
     <path
-        android:fillColor="#3DDC84"
-        android:pathData="M42,44L42,44A4,4 0,0 1,46 48L46,48A4,4 0,0 1,42 52L42,52A4,4 0,0 1,38 48L38,48A4,4 0,0 1,42 44z"/>
+        android:fillColor="#BBDEFB"
+        android:pathData="M60,28L60,40L72,40Z"/>
+
+    <!-- Download arrow -->
     <path
-        android:fillColor="#3DDC84"
-        android:pathData="M66,44L66,44A4,4 0,0 1,70 48L70,48A4,4 0,0 1,66 52L66,52A4,4 0,0 1,62 48L62,48A4,4 0,0 1,66 44z"/>
+        android:fillColor="#2196F3"
+        android:pathData="M54,48L54,66"/>
     <path
-        android:fillColor="#3DDC84"
-        android:pathData="M40,22L48,32"
+        android:fillColor="#2196F3"
+        android:strokeColor="#2196F3"
+        android:strokeWidth="4"
+        android:strokeLineCap="round"
+        android:pathData="M54,48L54,64"/>
+
+    <!-- Arrow head -->
+    <path
+        android:fillColor="#2196F3"
+        android:pathData="M46,58L54,68L62,58Z"/>
+
+    <!-- Bottom line -->
+    <path
+        android:strokeColor="#2196F3"
         android:strokeWidth="3"
-        android:strokeColor="#3DDC84"/>
-    <path
-        android:fillColor="#3DDC84"
-        android:pathData="M68,22L60,32"
-        android:strokeWidth="3"
-        android:strokeColor="#3DDC84"/>
+        android:strokeLineCap="round"
+        android:pathData="M44,72L64,72"/>
 </vector>

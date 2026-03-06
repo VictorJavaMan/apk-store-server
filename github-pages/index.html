@@ -511,6 +511,23 @@
             opacity: 1;
         }
 
+        /* Description with links */
+        .description {
+            color: var(--on-surface-variant);
+            margin-bottom: 20px;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .description a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .description a:hover {
+            text-decoration: underline;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .header-content {
@@ -813,7 +830,7 @@
                         <span>${formatDate(apk.uploadedAt)}</span>
                     </div>
                 </div>
-                ${apk.description ? `<p style="color: var(--on-surface-variant); margin-bottom: 20px;">${escapeHtml(apk.description)}</p>` : ''}
+                ${apk.description ? `<div class="description">${linkify(apk.description)}</div>` : ''}
                 <div style="display: flex; gap: 12px;">
                     <button class="btn btn-danger" onclick="deleteApk(${apk.id}, '${escapeHtml(apk.fileName)}'); hideDetailModal();">
                         <span class="material-icons">delete</span>
@@ -951,6 +968,12 @@
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
+        }
+
+        function linkify(text) {
+            if (!text) return '';
+            const urlRegex = /(https?:\/\/[^\s<>"{}|\\^`\[\]]+)/g;
+            return escapeHtml(text).replace(urlRegex, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
         }
 
         function showToast(message) {

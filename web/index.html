@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>APK Store</title>
+    <title>APK For Testers</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
         :root {
-            --primary: #3DDC84;
-            --primary-dark: #00a956;
-            --primary-light: #B8F5CD;
-            --secondary: #4285F4;
+            --primary: #2196F3;
+            --primary-dark: #1976D2;
+            --primary-light: #BBDEFB;
+            --secondary: #03A9F4;
             --error: #B3261E;
             --background: #FAFAFA;
             --surface: #FFFFFF;
@@ -223,14 +223,6 @@
             text-overflow: ellipsis;
         }
 
-        .apk-package {
-            font-size: 13px;
-            color: var(--on-surface-variant);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
         .apk-meta {
             display: flex;
             gap: 12px;
@@ -317,13 +309,13 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 4px 12px rgba(61, 220, 132, 0.4);
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
             transition: all 0.2s;
         }
 
         .fab:hover {
             transform: scale(1.05);
-            box-shadow: 0 6px 16px rgba(61, 220, 132, 0.5);
+            box-shadow: 0 6px 16px rgba(33, 150, 243, 0.5);
         }
 
         .fab .material-icons {
@@ -518,6 +510,23 @@
             opacity: 1;
         }
 
+        /* Description with links */
+        .description {
+            color: var(--on-surface-variant);
+            margin-bottom: 20px;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .description a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .description a:hover {
+            text-decoration: underline;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .header-content {
@@ -541,7 +550,7 @@
         <div class="header-content">
             <div class="logo">
                 <div class="logo-icon">APK</div>
-                <span>APK Store</span>
+                <span>APK For Testers</span>
             </div>
             <div class="search-box">
                 <span class="material-icons">search</span>
@@ -588,7 +597,7 @@
                     <span class="material-icons">close</span>
                 </button>
             </div>
-            <form id="uploadForm">
+            <div id="uploadForm">
                 <div class="form-group">
                     <label>APK File</label>
                     <div class="file-input" id="fileInput">
@@ -599,26 +608,14 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Package Name</label>
-                    <input type="text" id="packageName" placeholder="com.example.app" required>
-                </div>
-                <div class="form-group">
-                    <label>Version Name</label>
-                    <input type="text" id="versionName" placeholder="1.0.0" required>
-                </div>
-                <div class="form-group">
-                    <label>Version Code</label>
-                    <input type="number" id="versionCode" placeholder="1" required>
-                </div>
-                <div class="form-group">
                     <label>Description</label>
                     <textarea id="description" rows="3" placeholder="App description..."></textarea>
                 </div>
-                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                <button type="button" class="btn btn-primary" style="width: 100%;" onclick="uploadFile()">
                     <span class="material-icons">upload</span>
                     Upload
                 </button>
-            </form>
+            </div>
         </div>
     </div>
 
@@ -649,8 +646,7 @@
         document.getElementById('searchInput').addEventListener('input', (e) => {
             const query = e.target.value.toLowerCase();
             const filtered = apks.filter(apk =>
-                apk.fileName.toLowerCase().includes(query) ||
-                apk.packageName.toLowerCase().includes(query)
+                apk.fileName.toLowerCase().includes(query)
             );
             renderApks(filtered);
         });
@@ -699,14 +695,9 @@
                         <div class="apk-icon">APK</div>
                         <div class="apk-info">
                             <div class="apk-name">${escapeHtml(apk.fileName)}</div>
-                            <div class="apk-package">${escapeHtml(apk.packageName)}</div>
                         </div>
                     </div>
                     <div class="apk-meta">
-                        <span class="chip">
-                            <span class="material-icons">label</span>
-                            v${escapeHtml(apk.versionName)}
-                        </span>
                         <span class="chip">
                             <span class="material-icons">storage</span>
                             ${formatSize(apk.fileSize)}
@@ -735,6 +726,12 @@
             document.getElementById('totalDownloads').textContent = totalDownloads;
         }
 
+        function linkify(text) {
+            if (!text) return '';
+            const urlRegex = /(https?:\/\/[^\s<>"{}|\\^`\[\]]+)/g;
+            return escapeHtml(text).replace(urlRegex, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
+        }
+
         function showDetail(id) {
             const apk = apks.find(a => a.id === id);
             if (!apk) return;
@@ -745,16 +742,11 @@
                     <div class="apk-header">
                         <div class="apk-icon" style="width: 80px; height: 80px; font-size: 24px;">APK</div>
                         <div class="apk-info">
-                            <div class="apk-package">${escapeHtml(apk.packageName)}</div>
+                            <div class="apk-name">${escapeHtml(apk.fileName)}</div>
                         </div>
                     </div>
                 </div>
                 <div style="display: grid; gap: 12px; margin-bottom: 20px;">
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                        <span class="material-icons" style="color: var(--on-surface-variant);">info</span>
-                        <span style="color: var(--on-surface-variant); width: 100px;">Version</span>
-                        <span>${apk.versionName} (${apk.versionCode})</span>
-                    </div>
                     <div style="display: flex; align-items: center; gap: 12px;">
                         <span class="material-icons" style="color: var(--on-surface-variant);">storage</span>
                         <span style="color: var(--on-surface-variant); width: 100px;">Size</span>
@@ -771,7 +763,7 @@
                         <span>${formatDate(apk.uploadedAt)}</span>
                     </div>
                 </div>
-                ${apk.description ? `<p style="color: var(--on-surface-variant); margin-bottom: 20px;">${escapeHtml(apk.description)}</p>` : ''}
+                ${apk.description ? `<div class="description">${linkify(apk.description)}</div>` : ''}
                 <div style="display: flex; gap: 12px;">
                     <button class="btn btn-danger" onclick="deleteApk(${apk.id}, '${escapeHtml(apk.fileName)}'); hideDetailModal();">
                         <span class="material-icons">delete</span>
@@ -842,24 +834,23 @@
 
         function hideUploadModal() {
             document.getElementById('uploadModal').classList.remove('active');
-            document.getElementById('uploadForm').reset();
+            document.getElementById('apkFile').value = '';
+            document.getElementById('description').value = '';
             document.getElementById('fileName').textContent = '';
         }
 
-        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-
+        async function uploadFile() {
             const file = apkFileInput.files[0];
+
             if (!file) {
                 showToast('Please select a file');
                 return;
             }
 
+            showToast('Uploading...');
+
             const formData = new FormData();
             formData.append('file', file);
-            formData.append('packageName', document.getElementById('packageName').value);
-            formData.append('versionName', document.getElementById('versionName').value);
-            formData.append('versionCode', document.getElementById('versionCode').value);
             formData.append('description', document.getElementById('description').value);
 
             try {
@@ -868,7 +859,15 @@
                     body: formData
                 });
 
-                const result = await response.json();
+                const text = await response.text();
+                let result;
+                try {
+                    result = JSON.parse(text);
+                } catch (parseError) {
+                    showToast('Upload failed: Invalid response');
+                    return;
+                }
+
                 if (result.success) {
                     showToast('Upload successful!');
                     hideUploadModal();
@@ -877,9 +876,9 @@
                     showToast('Upload failed: ' + result.message);
                 }
             } catch (error) {
-                showToast('Upload failed');
+                showToast('Upload failed: ' + error.message);
             }
-        });
+        }
 
         // Close modal on overlay click
         document.querySelectorAll('.modal-overlay').forEach(overlay => {
