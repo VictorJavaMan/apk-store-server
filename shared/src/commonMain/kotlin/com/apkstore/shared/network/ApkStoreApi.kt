@@ -5,24 +5,20 @@ import com.apkstore.shared.domain.ApkListResponse
 import com.apkstore.shared.domain.UploadResponse
 import io.ktor.client.*
 import io.ktor.client.call.*
-import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.client.request.forms.*
 import io.ktor.http.*
-import io.ktor.serialization.kotlinx.json.*
-import kotlinx.serialization.json.Json
 
-class ApkStoreApi(private val baseUrl: String = "http://localhost:8080") {
+class ApkStoreApi(baseUrl: String = "http://localhost:8080") {
 
-    private val client = HttpClient {
-        install(ContentNegotiation) {
-            json(Json {
-                prettyPrint = true
-                isLenient = true
-                ignoreUnknownKeys = true
-            })
-        }
+    var baseUrl: String = baseUrl
+        private set
+
+    fun setServerUrl(url: String) {
+        baseUrl = url.trimEnd('/')
     }
+
+    private val client = createHttpClient()
 
     suspend fun getApks(): Result<List<ApkInfo>> = runCatching {
         val response: ApkListResponse = client.get("$baseUrl/api/apks").body()

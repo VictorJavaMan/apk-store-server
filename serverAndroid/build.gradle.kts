@@ -15,7 +15,7 @@ kotlin {
 
     sourceSets {
         androidMain.dependencies {
-            implementation(libs.ktor.server.cio)
+            implementation(libs.ktor.server.netty.common)
             implementation(libs.ktor.server.content.negotiation.common)
             implementation(libs.ktor.server.cors.common)
             implementation(libs.ktor.server.partial.content.common)

@@ -27,7 +27,12 @@ import okhttp3.RequestBody
 import okio.BufferedSink
 import okio.source
 import org.json.JSONObject
+import java.security.SecureRandom
+import java.security.cert.X509Certificate
 import java.util.concurrent.TimeUnit
+import javax.net.ssl.SSLContext
+import javax.net.ssl.TrustManager
+import javax.net.ssl.X509TrustManager
 
 @Composable
 fun UploadApkDialog(
@@ -182,7 +187,18 @@ private suspend fun uploadFile(
     fileName: String,
     description: String?
 ): Boolean = withContext(Dispatchers.IO) {
+    // Trust all certificates for self-signed HTTPS
+    val trustAllCerts = arrayOf<TrustManager>(object : X509TrustManager {
+        override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
+        override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
+        override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
+    })
+    val sslContext = SSLContext.getInstance("TLS")
+    sslContext.init(null, trustAllCerts, SecureRandom())
+
     val client = OkHttpClient.Builder()
+        .sslSocketFactory(sslContext.socketFactory, trustAllCerts[0] as X509TrustManager)
+        .hostnameVerifier { _, _ -> true }
         .connectTimeout(60, TimeUnit.SECONDS)
         .writeTimeout(5, TimeUnit.MINUTES)
         .readTimeout(60, TimeUnit.SECONDS)

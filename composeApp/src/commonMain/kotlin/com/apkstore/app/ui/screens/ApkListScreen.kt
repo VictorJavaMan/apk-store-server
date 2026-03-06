@@ -24,8 +24,8 @@ fun ApkListScreen(
     onApkClick: (ApkInfo) -> Unit,
     onApkDismiss: () -> Unit,
     onDownload: (Int) -> Unit,
-    onDelete: (Int) -> Unit,
-    onUploadClick: () -> Unit,
+    onDelete: ((Int) -> Unit)?,
+    onUploadClick: (() -> Unit)?,
     modifier: Modifier = Modifier
 ) {
     var searchExpanded by remember { mutableStateOf(false) }
@@ -76,13 +76,15 @@ fun ApkListScreen(
             )
         },
         floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = onUploadClick,
-                icon = { Icon(Icons.Default.Add, contentDescription = null) },
-                text = { Text("Upload APK") },
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            )
+            if (onUploadClick != null) {
+                ExtendedFloatingActionButton(
+                    onClick = onUploadClick,
+                    icon = { Icon(Icons.Default.Add, contentDescription = null) },
+                    text = { Text("Upload APK") },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
+            }
         }
     ) { paddingValues ->
         Box(
@@ -183,7 +185,7 @@ fun ApkListScreen(
                 apk = apk,
                 onDismiss = onApkDismiss,
                 onDownload = { onDownload(apk.id) },
-                onDelete = { onDelete(apk.id) }
+                onDelete = onDelete?.let { { it(apk.id) } }
             )
         }
     }
