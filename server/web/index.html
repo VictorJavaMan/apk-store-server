@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>APK For Testers</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 108 108'%3E%3Ccircle cx='54' cy='54' r='40' fill='%232196F3'/%3E%3Cpath d='M36,28L60,28L72,40L72,80L36,80Z' fill='white'/%3E%3Cpath d='M60,28L60,40L72,40Z' fill='%23BBDEFB'/%3E%3Cpath d='M54,48L54,64' stroke='%232196F3' stroke-width='4' stroke-linecap='round'/%3E%3Cpath d='M46,58L54,68L62,58Z' fill='%232196F3'/%3E%3Cpath d='M44,72L64,72' stroke='%232196F3' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
@@ -292,6 +293,32 @@
 
         .btn-danger:hover {
             background: rgba(179, 38, 30, 0.1);
+        }
+
+        .btn-delete {
+            width: 36px;
+            height: 36px;
+            min-width: 36px;
+            padding: 0;
+            border: none;
+            border-radius: 50%;
+            background: transparent;
+            color: var(--on-surface-variant);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            flex: none;
+        }
+
+        .btn-delete:hover {
+            background: rgba(179, 38, 30, 0.1);
+            color: var(--error);
+        }
+
+        .btn-delete .material-icons {
+            font-size: 20px;
         }
 
         /* FAB */
@@ -611,7 +638,17 @@
                     <label>Description</label>
                     <textarea id="description" rows="3" placeholder="App description..."></textarea>
                 </div>
-                <button type="button" class="btn btn-primary" style="width: 100%;" onclick="uploadFile()">
+                <!-- Progress bar -->
+                <div id="uploadProgress" style="display: none; margin-bottom: 16px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                        <span id="progressText">Uploading...</span>
+                        <span id="progressPercent">0%</span>
+                    </div>
+                    <div style="height: 8px; background: var(--background); border-radius: 4px; overflow: hidden;">
+                        <div id="progressBar" style="height: 100%; width: 0%; background: var(--primary); transition: width 0.2s;"></div>
+                    </div>
+                </div>
+                <button type="button" id="uploadBtn" class="btn btn-primary" style="width: 100%;" onclick="uploadFile()">
                     <span class="material-icons">upload</span>
                     Upload
                 </button>
@@ -712,7 +749,7 @@
                             <span class="material-icons">download</span>
                             Download
                         </button>
-                        <button class="btn btn-danger" onclick="deleteApk(${apk.id}, '${escapeHtml(apk.fileName)}')">
+                        <button class="btn-delete" onclick="deleteApk(${apk.id}, '${escapeHtml(apk.fileName)}')" title="Delete">
                             <span class="material-icons">delete</span>
                         </button>
                     </div>
@@ -837,6 +874,12 @@
             document.getElementById('apkFile').value = '';
             document.getElementById('description').value = '';
             document.getElementById('fileName').textContent = '';
+            // Reset progress
+            document.getElementById('uploadProgress').style.display = 'none';
+            document.getElementById('progressBar').style.width = '0%';
+            document.getElementById('progressBar').style.background = 'var(--primary)';
+            document.getElementById('uploadBtn').disabled = false;
+            document.getElementById('uploadBtn').innerHTML = '<span class="material-icons">upload</span> Upload';
         }
 
         async function uploadFile() {
@@ -847,37 +890,87 @@
                 return;
             }
 
-            showToast('Uploading...');
+            // Show progress UI
+            const progressDiv = document.getElementById('uploadProgress');
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            const progressPercent = document.getElementById('progressPercent');
+            const uploadBtn = document.getElementById('uploadBtn');
+
+            progressDiv.style.display = 'block';
+            progressBar.style.width = '0%';
+            progressText.textContent = 'Uploading ' + file.name + '...';
+            progressPercent.textContent = '0%';
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = '<span class="material-icons">hourglass_empty</span> Uploading...';
 
             const formData = new FormData();
-            formData.append('file', file);
-            formData.append('description', document.getElementById('description').value);
+            formData.append('file', file, file.name);
+            formData.append('description', document.getElementById('description').value || '');
 
-            try {
-                const response = await fetch(`${API_BASE}/upload`, {
-                    method: 'POST',
-                    body: formData
-                });
+            const xhr = new XMLHttpRequest();
 
-                const text = await response.text();
-                let result;
-                try {
-                    result = JSON.parse(text);
-                } catch (parseError) {
-                    showToast('Upload failed: Invalid response');
-                    return;
+            xhr.upload.onprogress = function(e) {
+                if (e.lengthComputable) {
+                    const percent = Math.round((e.loaded / e.total) * 100);
+                    progressBar.style.width = percent + '%';
+                    progressPercent.textContent = percent + '%';
+                    if (percent === 100) {
+                        progressText.textContent = 'Processing...';
+                    }
                 }
+            };
 
-                if (result.success) {
-                    showToast('Upload successful!');
-                    hideUploadModal();
-                    loadApks();
+            xhr.onload = function() {
+                uploadBtn.disabled = false;
+                uploadBtn.innerHTML = '<span class="material-icons">upload</span> Upload';
+
+                if (xhr.status === 200) {
+                    try {
+                        const result = JSON.parse(xhr.responseText);
+                        if (result.success) {
+                            showToast('Upload successful!');
+                            hideUploadModal();
+                            loadApks();
+                        } else {
+                            progressText.textContent = 'Failed: ' + result.message;
+                            progressBar.style.background = 'var(--error)';
+                            showToast('Upload failed: ' + result.message);
+                        }
+                    } catch (e) {
+                        progressText.textContent = 'Invalid server response';
+                        showToast('Upload failed: Invalid response');
+                    }
                 } else {
-                    showToast('Upload failed: ' + result.message);
+                    progressText.textContent = 'Error: HTTP ' + xhr.status;
+                    progressBar.style.background = 'var(--error)';
+                    showToast('Upload failed: HTTP ' + xhr.status);
                 }
-            } catch (error) {
-                showToast('Upload failed: ' + error.message);
-            }
+            };
+
+            xhr.onerror = function() {
+                uploadBtn.disabled = false;
+                uploadBtn.innerHTML = '<span class="material-icons">upload</span> Upload';
+                progressText.textContent = 'Network error';
+                progressBar.style.background = 'var(--error)';
+
+                if (window.location.protocol === 'https:') {
+                    showToast('HTTPS error - try HTTP or accept certificate');
+                } else {
+                    showToast('Network error');
+                }
+            };
+
+            xhr.ontimeout = function() {
+                uploadBtn.disabled = false;
+                uploadBtn.innerHTML = '<span class="material-icons">upload</span> Upload';
+                progressText.textContent = 'Timeout';
+                showToast('Upload timeout');
+            };
+
+            xhr.open('POST', API_BASE + '/upload', true);
+            xhr.timeout = 600000; // 10 minutes
+            xhr.send(formData);
         }
 
         // Close modal on overlay click
